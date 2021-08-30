@@ -12,8 +12,9 @@ object MethodNotations extends App {
     def +(nickname: String) = new Person( s"${name} (${nickname})", favoriteMovie)
 
     def learns(subject: String) = s"${name} learns ${subject}"
-    // Equivalent def learns: String = this learns "Scala"
     // Equivalent def learns: String = learns("Scala")
+    def learns: String = this learns "Scala"
+
 
     def unary_! = s"$name, what the heck?!"
     def unary_+ = new Person(name, favoriteMovie, age + 1)
