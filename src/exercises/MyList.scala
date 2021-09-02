@@ -127,7 +127,8 @@ object ListTest extends App {
   println(listOfStrings.isEmpty)
 
   println(listOfStrings.toString)
-  println(listOfIntegers.filter((e: Int) => e % 2 == 0))
+//  println(listOfIntegers.filter((e: Int) => e % 2 == 0))
+  println(listOfIntegers.filter(_ % 2 == 0))
   /*
     Same as
 
@@ -136,9 +137,11 @@ object ListTest extends App {
     }))
    */
 
-  println(listOfStrings.filter((e: String) => e.length > 3))
+//  println(listOfStrings.filter((e: String) => e.length > 3))
+  println(listOfStrings.filter(_.length > 3))
 
-  println(listOfIntegers.map((e: Int) => e * 3))
+//  println(listOfIntegers.map((e: Int) => e * 3))
+  println(listOfIntegers.map(_ * 3))
   /*
     Same as
 
@@ -147,7 +150,8 @@ object ListTest extends App {
     }))
    */
 
-  println(listOfStrings.map((e: String) => e.toUpperCase()))
+//  println(listOfStrings.map((e: String) => e.toUpperCase()))
+  println(listOfStrings.map(_.toUpperCase()))
 
   val listOfIntegers2 = Cons(10, Cons(20, Cons(30, Cons(40, Empty))))
 
