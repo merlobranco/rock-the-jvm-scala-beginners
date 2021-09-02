@@ -29,7 +29,7 @@ abstract class MyList[+A] {
   override def toString: String = "[" + printElements + "]"
 }
 
-object Empty extends MyList[Nothing] {
+case object Empty extends MyList[Nothing] {
   override def head: Nothing = throw new NoSuchElementException
 
   override def tail: MyList[Nothing] = throw new NoSuchElementException
@@ -49,7 +49,7 @@ object Empty extends MyList[Nothing] {
   override def +[B >: Nothing](l: MyList[B]): MyList[B] = l
 }
 
-class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
+case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
 
   override def head: A = h
 
@@ -113,6 +113,7 @@ trait MyTransformer[-A, B] {
 object ListTest extends App {
 
   val listOfIntegers = new Cons(1, new Cons(2, new Cons(3, new Cons(4, Empty))))
+  val cloneListOfIntegers = new Cons(1, new Cons(2, new Cons(3, new Cons(4, Empty))))
   println(listOfIntegers.tail.head)
   println(listOfIntegers.add(5).head)
   println(listOfIntegers.isEmpty)
@@ -151,13 +152,12 @@ object ListTest extends App {
 
   println(listOfIntegers + listOfIntegers2)
 
-  println(listOfIntegers.flatMap((e: Int) => new Cons(e, new Cons(e + 1, Empty))))
-  /*
-    Same as
+  // println(listOfIntegers.flatMap((e: Int) => new Cons(e, new Cons(e + 1, Empty))))
 
-    println(listOfIntegers.flatMap(new MyTransformer[Int, MyList[Int]] {
-      override def transform(e: Int): MyList[Int] = new Cons(e, new Cons(e + 1, Empty))
-    }))
+  println(listOfIntegers.flatMap(new MyTransformer[Int, MyList[Int]] {
+    override def transform(e: Int): MyList[Int] = new Cons(e, new Cons(e + 1, Empty))
+  }))
 
-   */
+  // By converting Empty and Cons to case objects and classed we just made them serializable and we are able to use them through the network
+  println(cloneListOfIntegers == listOfIntegers)
 }
