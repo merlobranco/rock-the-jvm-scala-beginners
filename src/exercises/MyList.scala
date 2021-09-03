@@ -29,7 +29,7 @@ abstract class MyList[+A] {
   def flatMap[B](tr: A => MyList[B]): MyList[B]
 
   // Concatenation
-  def +[B >: A](l: MyList[B]): MyList[B]
+  def ++[B >: A](l: MyList[B]): MyList[B]
 
   // HOFs (Higher order functions)
   def foreach(f: A => Unit): Unit
@@ -52,7 +52,7 @@ case object Empty extends MyList[Nothing] {
   override def filter(p: Nothing => Boolean): MyList[Nothing] = Empty
   override def flatMap[B](tr: Nothing => MyList[B]): MyList[B] = Empty
 
-  override def +[B >: Nothing](l: MyList[B]): MyList[B] = l
+  override def ++[B >: Nothing](l: MyList[B]): MyList[B] = l
 
   override def foreach(f: Nothing => Unit): Unit = ()
   override def sort(f: (Nothing, Nothing) => Int): MyList[Nothing] = Empty
@@ -89,7 +89,7 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
     = [1, 2, 2, 3]
    */
   override def flatMap[B](tr: A => MyList[B]): MyList[B] =
-    tr(h) + t.flatMap(tr)
+    tr(h) ++ t.flatMap(tr)
 
 //  override def printElements: String =
 //    if (t.isEmpty) h.toString
@@ -110,7 +110,7 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
     = new Cons(1, new Cons(2, [3, 4, 5]))
     = new Cons(1, new Cons(2, new Cons(3, new Cons (4, new Cons(5, Empty)))))
    */
-  override def +[B >: A](l: MyList[B]): MyList[B] = new Cons(h, t + l)
+  override def ++[B >: A](l: MyList[B]): MyList[B] = new Cons(h, t ++ l)
 
   override def foreach(f: A => Unit): Unit = {
     f(h)
@@ -193,7 +193,7 @@ object ListTest extends App {
 
   val listOfIntegers2 = Cons(10, Cons(20, Cons(30, Cons(40, Empty))))
 
-  println(listOfIntegers + listOfIntegers2)
+  println(listOfIntegers ++ listOfIntegers2)
 
   // println(listOfIntegers.flatMap((e: Int) => new Cons(e, new Cons(e + 1, Empty))))
 
@@ -217,4 +217,12 @@ object ListTest extends App {
   println(listOfIntegers.zipWith(listOfIntegers2, (x: Int,y: Int) => x * y))
 
   println(listOfIntegers2.fold(1, (x: Int, y: Int) => x * y))
+
+  // For comprehensions
+  val forCombinations = for {
+    n <- listOfIntegers
+    c <- listOfStrings
+  } yield n.toString + "-"  + c
+
+  println(forCombinations)
 }
