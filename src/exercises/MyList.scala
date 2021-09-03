@@ -1,5 +1,7 @@
 package exercises
 
+import lectures.part2oop.Generics.MyList
+
 import scala.annotation.tailrec
 
 abstract class MyList[+A] {
@@ -17,37 +19,48 @@ abstract class MyList[+A] {
   def isEmpty: Boolean
   def add[B >: A](e: B): MyList[B]
 
+  // Polymorphic call
+  def printElements: String
+  override def toString: String = "[" + printElements + "]"
+
+  // Higher-order functions, functions that receive other functions as parameters or return other functions
   def map[B](t: A => B): MyList[B]
   def filter(p: A => Boolean): MyList[A]
   def flatMap[B](tr: A => MyList[B]): MyList[B]
 
+  // Concatenation
   def +[B >: A](l: MyList[B]): MyList[B]
 
-  // Polymorph
-  def printElements: String
+  // HOFs (Higher order functions)
+  def foreach(f: A => Unit): Unit
+  def sort(f: (A, A) => Int): MyList[A]
+  def zipWith[B, C](l: MyList[B], f: (A, B) => C): MyList[C]
+  def fold[B](e: B, f: (A, B) => B): B
 
-  override def toString: String = "[" + printElements + "]"
+
 }
 
 case object Empty extends MyList[Nothing] {
   override def head: Nothing = throw new NoSuchElementException
-
   override def tail: MyList[Nothing] = throw new NoSuchElementException
-
   override def isEmpty: Boolean = true
-
   override def add[B >: Nothing](e: B): MyList[B] = new Cons(e, Empty)
 
   override def printElements: String = ""
 
-  // Higher-order functions, functions that receive other functions as parameters or return other functions
   override def map[B](tr: Nothing => B): MyList[B] = Empty
-
   override def filter(p: Nothing => Boolean): MyList[Nothing] = Empty
-
   override def flatMap[B](tr: Nothing => MyList[B]): MyList[B] = Empty
 
   override def +[B >: Nothing](l: MyList[B]): MyList[B] = l
+
+  override def foreach(f: Nothing => Unit): Unit = ()
+  override def sort(f: (Nothing, Nothing) => Int): MyList[Nothing] = Empty
+  override def zipWith[B, C](l: MyList[B], f: (Nothing, B) => C): MyList[C] =
+    if (!l.isEmpty) throw new RuntimeException("Lists are not same size")
+    else Empty
+
+  override def fold[B](e: B, f: (Nothing, B) => B): B = e
 }
 
 case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
@@ -78,15 +91,6 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
   override def flatMap[B](tr: A => MyList[B]): MyList[B] =
     tr(h) + t.flatMap(tr)
 
-  /*
-    [1, 2] + [3, 4, 5]
-    = new Cons(1, [2] + [3, 4, 5])
-    = new Cons(1, new Cons(2, Empty + [3, 4, 5]))
-    = new Cons(1, new Cons(2, [3, 4, 5]))
-    = new Cons(1, new Cons(2, new Cons(3, new Cons (4, new Cons(5, Empty)))))
-   */
-  override def +[B >: A](l: MyList[B]): MyList[B] = new Cons(h, t + l)
-
 //  override def printElements: String =
 //    if (t.isEmpty) h.toString
 //    else h + " " + t.printElements
@@ -99,6 +103,38 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
     printElementsTailRec(this)
   }
 
+  /*
+    [1, 2] + [3, 4, 5]
+    = new Cons(1, [2] + [3, 4, 5])
+    = new Cons(1, new Cons(2, Empty + [3, 4, 5]))
+    = new Cons(1, new Cons(2, [3, 4, 5]))
+    = new Cons(1, new Cons(2, new Cons(3, new Cons (4, new Cons(5, Empty)))))
+   */
+  override def +[B >: A](l: MyList[B]): MyList[B] = new Cons(h, t + l)
+
+  override def foreach(f: A => Unit): Unit = {
+    f(h)
+    t.foreach(f)
+  }
+
+  override def sort(f: (A, A) => Int): MyList[A] = {
+    def insert(x: A, sl: MyList[A]): MyList[A] =
+      if (sl.isEmpty) Cons(x, Empty)
+      else if (f(x, sl.head) < 0) Cons(h, sl)
+      else Cons(sl.head, insert(x, sl.tail))
+
+    val sorted = t.sort(f);
+    insert(h, sorted)
+  }
+
+  override def zipWith[B, C](l: MyList[B], f: (A, B) => C): MyList[C] = {
+    if (l.isEmpty) throw new RuntimeException("Lists are not same size")
+    else Cons(f(h, l.head), t.zipWith(l.tail, f))
+  }
+
+  override def fold[B](e: B, f: (A, B) => B): B = {
+    t.fold(f(h, e), f)
+  }
 }
 
 //trait MyPredicate[-T] {
@@ -107,6 +143,7 @@ case class Cons[+A](h: A, t: MyList[A]) extends MyList[A] {
 
 // If we don't declare A like a contravariant, my code that using the MyTransformer type won't compile
 // because on the ded map the cryptic covariance type occurs in an invariant position
+// Take a look how is define trait Function1[-T, +R] for example
 //trait MyTransformer[-A, B] {
 //  def transform(e: A): B
 //}
@@ -115,6 +152,7 @@ object ListTest extends App {
 
   val listOfIntegers = Cons(1, Cons(2, Cons(3, Cons(4, Empty))))
   val cloneListOfIntegers = Cons(1, Cons(2, Cons(3, Cons(4, Empty))))
+  val listOfUnsortedIntegers = Cons(39, Cons(86, Cons(14, Cons(27, Cons(5, Empty)))))
   println(listOfIntegers.tail.head)
   println(listOfIntegers.add(5).head)
   println(listOfIntegers.isEmpty)
@@ -170,4 +208,13 @@ object ListTest extends App {
 
   // By converting Empty and Cons to case objects and classed we just made them serializable and we are able to use them through the network
   println(cloneListOfIntegers == listOfIntegers)
+
+  listOfIntegers.foreach((e: Int) => println(e))
+
+  println(listOfUnsortedIntegers)
+  println(listOfUnsortedIntegers.sort((x, y) => x - y))
+
+  println(listOfIntegers.zipWith(listOfIntegers2, (x: Int,y: Int) => x * y))
+
+  println(listOfIntegers2.fold(1, (x: Int, y: Int) => x * y))
 }

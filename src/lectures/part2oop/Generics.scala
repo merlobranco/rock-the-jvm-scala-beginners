@@ -6,7 +6,9 @@ object Generics extends App {
   //class MyList[A] {
   class MyList[+A] {
     // Use the type A
-    //def add(element: A): MyList[A] = ??? => WRONG with covariant approach
+    // => WRONG with covariant approach
+    // Covariant type A occurs in contravariant position in type A of value element
+    // def add(element: A): MyList[A] = ???
     def add[B >: A](element: B): MyList[B] = ???
     /*
       A = Cat
