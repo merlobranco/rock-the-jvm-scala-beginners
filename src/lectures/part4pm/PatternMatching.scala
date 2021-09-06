@@ -1,0 +1,99 @@
+package lectures.part4pm
+
+import scala.util.Random
+
+object PatternMatching extends App {
+
+  // Switch on steroids
+  val random = new Random(System.nanoTime())
+  val x = random.nextInt(10)
+
+  val description = x match {
+    case 1 => "The ONE"
+    case 2 => "Double or nothing"
+    case 3 => "Third time is the charm"
+    case _ => "Something else" // _ = WILDCARD
+  }
+
+  println(x)
+  println(description)
+
+  // 1. Decompose values
+  case class Person(name: String, age: Int)
+  val bob = Person("Bob", 20)
+
+  val greeting = bob match {
+    case Person(n, a) if a < 22 => s"Hi, my name is $n and I can't drink in the US" // In this example with have a guard
+    case Person(n, a) => s"Hi, my name is $n and I am $a years old"
+    case _ => "I don't know who I am"
+  }
+  println(greeting)
+
+  /*
+    1. Cases are matched in order
+    2. What if no cases match? MatchError
+    3. Type of the PM expression? Unified type of all the types in all the cases
+    4. PM works really well with case classes
+   */
+
+  // PM on sealed hierarchies
+  sealed class Animal
+  case class Dog(breed: String) extends  Animal
+  case class Parrot(greeting: String) extends Animal
+
+  val animal: Animal = Dog("Terra Nova")
+  animal match {
+    case Dog(someBreed) => println(s"Matched a dog of the $someBreed")
+  }
+
+  /*
+    Exercise
+    Simple function uses PM
+      takes an Expr => human readable form
+
+      Sum(Number(2), Number(3)) => 2 + 3
+      Sum(Sum(Number(2), Number(3)), Number(4)) => 2 + 3 + 4
+      Prod(Sum(Number(2), Number(1)), Number(3)) => (2 + 1) * 3
+      Sum(Prod(Number(2), Number(3)), Number(4)) => 2 * 1 + 4
+   */
+  trait Expr
+  case class Number(n: Int) extends Expr
+  case class Sum(e1: Expr, e2: Expr) extends Expr
+  case class Prod(e1: Expr, e2: Expr) extends Expr
+
+  val expression = Sum(Prod(Number(2), Number(3)), Number(4))
+
+  def show(e: Expr): String = e match {
+    case Number(n) => s"$n"
+    case Sum(e1, e2) => show(e1) + " + " + show(e2)
+    case Prod(e1, e2) if e1.isInstanceOf[Sum] => "(" + show(e1) + ") * " + show(e2)
+    case Prod(e1, e2) if e2.isInstanceOf[Sum] => show(e1) + " * (" + show(e2) + ")"
+    case Prod(e1, e2) => show(e1) + " * " + show(e2)
+  }
+
+  // Other approach
+  def show2(e: Expr): String = e match {
+    case Number(n) => s"$n"
+    case Sum(e1, e2) => show(e1) + " + " + show(e2)
+    case Prod(e1, e2) => {
+      def maybeShowParenthesis(exp: Expr) = exp match {
+        case Prod(_, _) => show(exp)
+        case Number(_) => show(exp)
+        case _ => "(" + show(exp) + ")"
+      }
+      maybeShowParenthesis(e1) + " * " + maybeShowParenthesis(e2)
+    }
+  }
+
+  println(show(Sum(Number(2), Number(3))))
+  println(show(Sum(Sum(Number(2), Number(3)), Number(4))))
+  println(show(Prod(Sum(Number(2), Number(1)), Number(3))))
+  println(show(Sum(Prod(Number(2), Number(3)), Number(4))))
+
+  println(show2(Sum(Number(2), Number(3))))
+  println(show2(Sum(Sum(Number(2), Number(3)), Number(4))))
+  println(show2(Prod(Sum(Number(2), Number(1)), Number(3))))
+  println(show2(Sum(Prod(Number(2), Number(3)), Number(4))))
+
+
+}
