@@ -11,6 +11,7 @@ object HandlingFailure extends App {
   println(aFailure)
 
   def unsafeMethod(): String = throw new RuntimeException("NO STRING FOR YOU BUSTER")
+  def safeMethod(): String = "It works!!!"
 
   // Try objects via the apply method
   val potentialFailure = Try(unsafeMethod())
@@ -83,10 +84,19 @@ object HandlingFailure extends App {
     .flatMap(c => c.getSafe("/home"))
     .foreach(renderHTML)
 
+
   // FOR-COMPREHENSIONS
   for {
     c <- HttpService.getConnectionSafe(host, port)
     p <- c.getSafe("/home")
   } yield renderHTML(p)
 
+  def toInt(s: String): Try[Int] = Try(Integer.parseInt(s.trim))
+  val a = toInt("1")
+  println(a)
+  val b = toInt("boo")
+  println(b)
+
+  val myText = Try(unsafeMethod()).map(_ + " || ").getOrElse("") + "something else"
+  println(myText)
 }

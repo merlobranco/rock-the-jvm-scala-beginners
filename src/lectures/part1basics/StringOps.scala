@@ -44,4 +44,6 @@ object StringOps extends App {
   println(raw"This is a \n newLine")
   val escaped = "This is a \n newLine"
   println(raw"$escaped") // The \n will be escaped
+  val date = "2021-09-31"
+  println("[" + date.substring(0, date.indexOf("-", 5)) + "]")
 }
